@@ -27,8 +27,8 @@ function parse(buffer) {
 	var dv= new DataView(buffer);  // Mittels DataView können die Inhalte des Buffers ausgelesen werden
 	var first = dv.getInt32(0);    // Ersten 32 Bit 
 	var count = dv.getInt32(4);    // Zweiten 32 Bit ->  Anzahl der zu lesenden Daten 
-	console.log("First 32 Bit: "+ first);
-	console.log("Count: "+ count);
+//	console.log("First 32 Bit: "+ first);
+//	console.log("Count: "+ count);
  
 	for(var i=1; i<=count; i++){      
 		arr[i-1]=dv.getFloat64(i*8);  // Daten werden in Float-Werte umgewandelt und in ein Array gespeichert. 

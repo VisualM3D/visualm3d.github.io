@@ -3,8 +3,12 @@
 <html>
 
 <head>
-  <title>VisualM3D</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2.0, minimum-scale=1, user-scalable=yes"/>
+  <title>Metos3D Visual</title>
+  <meta charset="UTF-8">
+  <meta name="description" content="Visualation-Tool for ocean simulation data">
+  <meta name="keywords" content="HTML,CSS,JavaScript">
+  <meta name="author" content="Michael Sack, Pierre Roeglin">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="js/d3.v3.min.js"></script>
   <script src="js/boarder.js"></script>
   <script src="js/scala.js"></script>
@@ -26,20 +30,29 @@
   		<input type="file" id="theFile" onchange="handleFiles(this.files)"/>	
   		<label for="max"> Max: <input type="number" id="max" onchange="redraw()"  style="width: 20%;"/> </label>
   		<label for="min"> Min: <input type="number" id="min" onchange="redraw()"  style="width: 20%;"/> </label>
+  		<canvas id ="Depth" width="150" height="30" style="width: 20%; height: 30px; position:absolute;right:0px;top:0px;" ></canvas>
   	</div>
 	<div>
 		<!--  Oberflaeche zum Malen der Daten -->
-		<canvas id ="canvasID" width="1400" height="640" style="width: 100%;"></canvas>
+		<canvas id ="canvasID" width="1400" height="640" style="width: 95%; height:100%;	"></canvas>
+		<!-- Slider fuer die Tiefe -->
+		<input type="range" id="depthSlider" orient="vertical" min="-15" max ="-1" step="1" value="1"  onchange="depthChange(this)" ontouchmove="depthChange(this)" onmousemove="depthChange(this)" style="height:530px;"/>  
+		
 	</div>
 
 	<div>
 		<!-- Slider fuer die Tiefe -->
-		<input type="range" id="depthSlider" min="1" max ="15" step="1" value="1" onchange="depthChange(this)" ontouchmove="depthChange(this)" onmousemove="depthChange(this)" style="width: 91.5%;"/>  
+		<input type="range" id="depthSlider" min="0" max ="127" step="1" value="1" onchange="latitudeChange(this,1)" ontouchstart="latitudeChange(this,1)" onmousemove="latitudeChange(this,1)" onmouseleave="latitudeChange(this,0)" style="width: 87%;"/>  
+		<canvas id="Latitude" width="100" height="30" style="width: 12%; height: 30px;"></canvas>
 	</div>
+	 
 	<!-- Anzeige fuer die aktuelle Tiefe -->
-	<canvas id="Depth" width="1280" height="30" style="width: 100%;"></canvas>
-
+	
+	<div> <!--  Malen der Querrschnitte -->
+		<canvas id="Profile" width="640" height="242" style="width: 87%;border: 1px solid;"></canvas>
+	</div>
 	<script>
+		var dataloaded=0;
 		var dat0;
 		var lsm;
 		var depth=1;
@@ -47,7 +60,11 @@
 		var ctx= canvas.getContext('2d');
 		var canvasDepth = document.getElementById('Depth');
 		var canvasDepth2d = canvasDepth.getContext('2d');
-
+		var canvasLatitude = document.getElementById('Latitude');
+		var ctxLatitude = canvasLatitude.getContext('2d');
+		var canvasProfile = document.getElementById('Profile');
+		var ctxProfile = canvasProfile.getContext('2d');
+		var latitude = 127;
 		d3.text('landSeaMask.csv', function(mask){
 		    lsm = d3.csv.parseRows(mask);
 		    setUp();	
@@ -55,7 +72,80 @@
 	</script>
 	
 	<img id="metos" src='m3d-logo-460x460.png' style='position:absolut; width:0px; height: 0px;visibility: hidden;'>
-	
+
+	<script>
+	// Landseamask land malen
+	function profileLand(lsm2){
+		var tiefe=0;
+		for(var counter2 = 0; counter2 < 64; counter2++ ){
+			var bisherDepth=0;
+			for(var counter = 1; counter <= 15; counter++){
+				tiefe=calcDepthdimension(counter);
+				if(lsm2[counter2][latitude]-counter<0){
+					ctxProfile.fillStyle = "rgb(225,225,225)";
+					ctxProfile.fillRect(630-counter2*10+1,bisherDepth+1,8,tiefe);
+				}
+				bisherDepth=bisherDepth+tiefe+2;
+			}		
+		}
+	}
+	//Berechnet die im Verhältnisstehende Tiefe
+	function calcDepthdimension(depth){
+		var tiefe=0;
+		//console.log(depth)
+		switch(depth){
+		case 1: 
+			tiefe=2;
+			break;
+		case 2:
+			tiefe=2;
+			break;
+		case 3:
+			tiefe=4;
+			break;
+		case 4:
+			tiefe=6;
+			break;
+		case 5:
+			tiefe=8;
+			break;
+		case 6:
+			tiefe=10
+			break;
+		case 7:
+			tiefe=12;
+			break;
+		case 8:
+			tiefe=14;
+			break;
+		case 9:
+			tiefe=16;
+			break;
+		case 10:
+			tiefe=18;
+			break;
+		case 11:
+			tiefe=20;
+			break;
+		case 12:
+			tiefe=22;
+			break;
+		case 13:
+			tiefe=24;
+			break;
+		case 14:
+			tiefe=26;
+			break;
+		case 15:
+			tiefe=28;
+			break;
+		default:
+			
+			break;					// Questschnitttiefe = 212 px
+		}
+		return tiefe;
+	}
+	</script>
 	<script>    
 	// Methodenblock
 
@@ -73,108 +163,142 @@
 		  var img=document.getElementById("metos");
 		  ctx.drawImage(img, 410, 90);
 		  doScala(3, 0);
+		  profileLand(lsm);
 		}
 
 		// Bekommt einen Datensatz mit, setzt die Skala zurueck und ruft die Funktion zum Malen der Daten auf. 
 		function redrawData(data){
-			  	  dat0=data;
-				  	document.getElementById("min").value="";
-				  	document.getElementById("max").value="";
-			  	  redraw();
+			dataloaded=1;
+			dat0=data;
+			document.getElementById("min").value="";
+			document.getElementById("max").value="";
+			redraw();
 		}
 		// Loescht die alten Daten und zeichnet die neue Oberflaeche mit den neuen Daten. 	
 		function redraw(){
-			var min;
-			// ist kein Minimum gesetzt ,wird als default Wert 0 genommen. 
-			if(document.getElementById("min").value == ""){
-				
-				min=calculateMin(dat0);          
-				if(parseFloat(min)<0){
-					min=0
+			if(dataloaded==1){
+				var min;
+				// ist kein Minimum gesetzt ,wird als default Wert 0 genommen. 
+				if(document.getElementById("min").value == ""){
+					
+					min=calculateMin(dat0);          
+					if(parseFloat(min)<0){
+						min=0
+					}
+				}else{
+					min= parseFloat(document.getElementById("min").value);
 				}
-			}else{
-				min= parseFloat(document.getElementById("min").value);
-			}
-			var max;
-			// ist kein Maximum gesetzt ,wird als default Wert 3 genommen. 
-			if(document.getElementById("max").value == ""){
+				var max;
+				// ist kein Maximum gesetzt ,wird als default Wert 3 genommen. 
+				if(document.getElementById("max").value == ""){
+					
+					var max=calculateMax(dat0);
+				    if(!(parseFloat(max) < 3)){
+				    	max=3;
+				    }
+				}else{
+					max= parseFloat(document.getElementById("max").value);
+				}
 				
-				var max=calculateMax(dat0);
-			    if(!(parseFloat(max) < 3)){
-			    	max=3;
-			    }
-			}else{
-				max= parseFloat(document.getElementById("max").value);
+			    var step = 510  /(max-min); 
+				ctx.fillStyle = "rgb(255,255,255)";
+				ctx.fillRect(0,0,1400, canvas.height);
+				ctxProfile.fillStyle = "rgb(255,255,255)";
+				ctxProfile.fillRect(0,0,canvasProfile.width, canvasProfile.height);
+				calculateDataColors(dat0, lsm, step, min, depth);
+				calculateProfileDataColors(dat0, lsm, step, min, latitude);
+				drawProfileDepthLine();
+				profileLand(lsm)
+				drawLandBoarder(lsm);
+				doScala(max, min);
 			}
-			
-		    var step = 510  /(max-min); 
-			ctx.fillStyle = "rgb(255,255,255)";
-			ctx.fillRect(0,0,1400, canvas.height);
-			calculateDataColors(dat0, lsm, step, min, depth);
-			drawLandBoarder(lsm);
-			doScala(max, min);
+		}
+		function drawProfileDepthLine(){
+			var lineDepth=0;
+			for(var i = 1; i<depth;i++){
+				lineDepth = lineDepth+calcDepthdimension(i)+2
+			}
+			ctxProfile.fillStyle = "rgb(0,0,0)";
+			ctxProfile.fillRect(0,lineDepth-1,canvasProfile.width, 2);
 		}
  		// Empfaengt den Wert vom Slider und laesst die Oberflaeche neu malen, mit der aktuellen Tiefe. 
  		function depthChange(value){	
-			depth= value.value;
+			depth= -value.value;
 			canvasDepth2d.fillStyle = "rgb(255,255,255)";
-			canvasDepth2d.fillRect(0,0,1280, 30);
+			canvasDepth2d.fillRect(0,0,canvasDepth.width, canvasDepth.height);
 			canvasDepth2d.fillStyle = 'rgb(0,0,255)';
 			canvasDepth2d.font="20px Georgia";
 			var tiefe = "0 - 50m";
 			switch(depth){
-				case "1": 
-					tiefe="0 - 50m";
+				case 1: 
+					tiefe="0 - 50m"; //50 = 2 px
 					break;
-				case "2":
-					tiefe="50 - 120m";
+				case 2:
+					tiefe="50 - 120m"; // 70 = 2px
 					break;
-				case "3":
-					tiefe="120 - 220m";
+				case 3:
+					tiefe="120 - 220m"; // 100 = 4 px
 					break;
-				case "4":
-					tiefe="220 - 360m";
+				case 4:
+					tiefe="220 - 360m"; // 140 = 6 px
 					break;
-				case "5":
-					tiefe="360 - 550m";
+				case 5:
+					tiefe="360 - 550m"; // 190 = 8 px
 					break;
-				case "6":
-					tiefe="550 - 790m";
+				case 6:
+					tiefe="550 - 790m"; // 240 = 10 px
 					break;
-				case "7":
-					tiefe="790 - 1080m";
+				case 7:
+					tiefe="790 - 1080m"; // 290 = 12 px
 					break;
-				case "8":
-					tiefe="1080 - 1420m";
+				case 8:
+					tiefe="1080 - 1420m"; // 340 = 14 px
 					break;
-				case "9":
-					tiefe="1420 - 1810m";
+				case 9:
+					tiefe="1420 - 1810m"; // 390 = 16 px
 					break;
-				case "10":
-					tiefe="1810 - 2250m";
+				case 10:
+					tiefe="1810 - 2250m"; // 440 = 18 px
 					break;
-				case "11":
-					tiefe="2250 - 2740m";
+				case 11:
+					tiefe="2250 - 2740m"; // 490 = 20 px
 					break;
-				case "12":
-					tiefe="2740 - 3280m";
+				case 12:
+					tiefe="2740 - 3280m"; // 540 = 22 px
 					break;
-				case "13":
-					tiefe="3280 - 3870m";
+				case 13:
+					tiefe="3280 - 3870m"; // 600 = 24 px
 					break;
-				case "14":
-					tiefe="3870 - 4510m";
+				case 14:
+					tiefe="3870 - 4510m"; // 640 = 26px
 					break;
-				case "15":
-					tiefe="4510 - 5200m";
+				case 15:
+					tiefe="4510 - 5200m"; // 690 = 28 px
 					break;
 				default:
-					break;
+					break;					// Questschnitttiefe = 212 px
 					
 			}
-			canvasDepth2d.fillText(tiefe, (canvasDepth.width* 0.915)/value.max*(depth-1) , 30);
+			canvasDepth2d.fillText(tiefe, 0 , 30);
 		    redraw();
 		  }
+ 		
+ 		function latitudeChange(value, onMove){
+ 			if(dataloaded==1){
+ 			latitude = value.value;
+ 			redraw();
+ 			if(onMove==1){
+ 				ctx.fillStyle = "rgb(0,0,0)";
+ 				ctx.fillRect(latitude*10+4,0,2, canvas.height);
+ 			}
+ 			ctxLatitude.fillStyle = "rgb(255,255,255)";
+ 			ctxLatitude.fillRect(0,0,canvasLatitude.width, canvasLatitude.height);
+ 			ctxLatitude.fillStyle = 'rgb(0,0,255)';
+ 			ctxLatitude.font="20px Georgia";
+ 			ctxLatitude.fillText("Lat: " +Math.round(latitude*2.8215) +"°", 0 , 30);
+ 			}
+ 		
+ 		}
 	</script>
 </body>
 </html>
