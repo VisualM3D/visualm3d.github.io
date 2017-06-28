@@ -15,39 +15,100 @@
   <script src="js/calculateDataColors.js"></script>
   <script src="js/calculateMinMax.js"></script>
   <script src="js/fileLoader.js"></script>
-  <style>
+  <style type="text/css">
+  html {
+  text-align: center;
+  }
   input{
-  	margin-left: 0px;
+  	margin-left: 0px;	
 	margin-right: 0px;
 	padding-left: 0px;
 	padding-right: 0px;
   };
+  body{
+  margin:0px;
+  padding:0px;
+  }
+  .field-style{
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-shadow: 1px 1px 25px rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    border: 6px solid #305A72;
+    padding: 8px;
+    outline: none;
+    border: 1px solid #B0CFE0;
+    -webkit-transition: all 0.30s ease-in-out;
+    -moz-transition: all 0.30s ease-in-out;
+    -ms-transition: all 0.30s ease-in-out;
+    -o-transition: all 0.30s ease-in-out;
+  }
+  .field-style:focus{
+    box-shadow: 0 0 5px #B0CFE0;
+    border:1px solid #B0CFE0;
+}
+.field-split{
+    width: 20%;
+}
+input.align-left{
+    float:left;
+    width:20%;
+}
+.fileUpload {
+    position: relative;
+    overflow: hidden;
+    margin: 10px;
+}
+.fileUpload input.upload {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0;
+    filter: alpha(opacity=0);
+}
+
   </style>
 </head>
-
-<body>
+<script>
+function makeLayout(){
+ 	document.getElementById('canvasID').style.height = window.innerHeight*0.90+'px'; 
+	document.getElementById('canvasID').style.width = (window.innerWidth*0.95)+'px';
+	document.getElementById('latitudeSlider').style.width = (window.innerWidth*0.87)+'px';
+	document.getElementById('depthSlider').style.height = (window.innerHeight)*0.85+'px';
+	document.getElementById('Latitude').style.width = (window.innerWidth*0.10)+'px';
+	document.getElementById('Profile').style.width = (window.innerWidth*0.87)+'px';
+	document.getElementById('Depth').style.left = (window.innerWidth*0.8)+'px';
+	document.getElementById('Depth').style.width = (window.innerWidth*0.2)+'px';
+}
+</script>
+<body onload="makeLayout()">
 	<div>
-  		<input type="file" id="theFile" onchange="handleFiles(this.files)"/>	
-  		<label for="max"> Max: <input type="number" id="max" onchange="redraw()"  style="width: 20%;"/> </label>
-  		<label for="min"> Min: <input type="number" id="min" onchange="redraw()"  style="width: 20%;"/> </label>
-  		<canvas id ="Depth" width="150" height="30" style="width: 20%; height: 30px; position:absolute;right:0px;top:0px;" ></canvas>
+  		<input type="file" id="theFile" onchange="handleFiles(this.files)"/>
+		<input type="number" id="max"  placeholder="Maximum" width="200" height="30" onchange="redraw()"  style="width: 20%; height:5%;"/>
+  		<input type="number" id="min"  placeholder="Minimum" width="200" height="30" onchange="redraw()"  style="width: 20%;height:5%;"/>
+  		<canvas id ="Depth" width="150" height="30" style="width: 20%; height: 30px; position:aboslute; top:0px;" ></canvas>
   	</div>
 	<div>
 		<!--  Oberflaeche zum Malen der Daten -->
-		<canvas id ="canvasID" width="1400" height="640" style="width: 95%; height:100%;	"></canvas>
+		<canvas id ="canvasID" width="1400" height="640" style="width:100%;"></canvas>
 		<!-- Slider fuer die Tiefe -->
-		<input type="range" id="depthSlider" orient="vertical" min="-15" max ="-1" step="1" value="1"  onchange="depthChange(this)" ontouchmove="depthChange(this)" onmousemove="depthChange(this)" style="height:530px;"/>  
-		
+		<input type="range" id="depthSlider" orient="vertical" min="-15" max ="-1" step="1" value="1"  onchange="depthChange(this)" ontouchmove="depthChange(this)" onmousemove="depthChange(this)" style="height:530px;"/>
+
 	</div>
 
 	<div>
 		<!-- Slider fuer die Tiefe -->
-		<input type="range" id="depthSlider" min="0" max ="127" step="1" value="1" onchange="latitudeChange(this,1)" ontouchstart="latitudeChange(this,1)" onmousemove="latitudeChange(this,1)" onmouseleave="latitudeChange(this,0)" style="width: 87%;"/>  
+		<input type="range" id="latitudeSlider" min="0" max ="127" step="1" value="1" onchange="latitudeChange(this,1)" ontouchstart="latitudeChange(this,1)" onmousemove="latitudeChange(this,1)" onmouseleave="latitudeChange(this,0)" style="width: 87%;"/>
 		<canvas id="Latitude" width="100" height="30" style="width: 12%; height: 30px;"></canvas>
 	</div>
-	 
+
 	<!-- Anzeige fuer die aktuelle Tiefe -->
-	
+
 	<div> <!--  Malen der Querrschnitte -->
 		<canvas id="Profile" width="640" height="242" style="width: 87%;border: 1px solid;"></canvas>
 	</div>
@@ -67,13 +128,14 @@
 		var latitude = 127;
 		d3.text('landSeaMask.csv', function(mask){
 		    lsm = d3.csv.parseRows(mask);
-		    setUp();	
+		    setUp();
 		});
 	</script>
-	
+
 	<img id="metos" src='m3d-logo-460x460.png' style='position:absolut; width:0px; height: 0px;visibility: hidden;'>
 
 	<script>
+	
 	// Landseamask land malen
 	function profileLand(lsm2){
 		var tiefe=0;
@@ -86,7 +148,7 @@
 					ctxProfile.fillRect(630-counter2*10+1,bisherDepth+1,8,tiefe);
 				}
 				bisherDepth=bisherDepth+tiefe+2;
-			}		
+			}
 		}
 	}
 	//Berechnet die im Verhältnisstehende Tiefe
@@ -94,7 +156,7 @@
 		var tiefe=0;
 		//console.log(depth)
 		switch(depth){
-		case 1: 
+		case 1:
 			tiefe=2;
 			break;
 		case 2:
@@ -140,18 +202,18 @@
 			tiefe=28;
 			break;
 		default:
-			
+
 			break;					// Questschnitttiefe = 212 px
 		}
 		return tiefe;
 	}
 	</script>
-	<script>    
+	<script>
 	// Methodenblock
 
 		// Erzeugung des Startbildschirms
 		function setUp(){
-	
+
 		  document.getElementById("Depth").innerText="Tiefe: " +depth;
 		  document.getElementById("depthSlider").value=depth;
 		  document.getElementById("min").value="";
@@ -159,14 +221,14 @@
 		  document.getElementById("theFile").value="";
 		  landDataColors(lsm);
 		  drawLandBoarder(lsm);
-	
+
 		  var img=document.getElementById("metos");
 		  ctx.drawImage(img, 410, 90);
 		  doScala(3, 0);
 		  profileLand(lsm);
 		}
 
-		// Bekommt einen Datensatz mit, setzt die Skala zurueck und ruft die Funktion zum Malen der Daten auf. 
+		// Bekommt einen Datensatz mit, setzt die Skala zurueck und ruft die Funktion zum Malen der Daten auf.
 		function redrawData(data){
 			dataloaded=1;
 			dat0=data;
@@ -174,14 +236,14 @@
 			document.getElementById("max").value="";
 			redraw();
 		}
-		// Loescht die alten Daten und zeichnet die neue Oberflaeche mit den neuen Daten. 	
+		// Loescht die alten Daten und zeichnet die neue Oberflaeche mit den neuen Daten.
 		function redraw(){
 			if(dataloaded==1){
 				var min;
-				// ist kein Minimum gesetzt ,wird als default Wert 0 genommen. 
+				// ist kein Minimum gesetzt ,wird als default Wert 0 genommen.
 				if(document.getElementById("min").value == ""){
-					
-					min=calculateMin(dat0);          
+
+					min=calculateMin(dat0);
 					if(parseFloat(min)<0){
 						min=0
 					}
@@ -189,9 +251,9 @@
 					min= parseFloat(document.getElementById("min").value);
 				}
 				var max;
-				// ist kein Maximum gesetzt ,wird als default Wert 3 genommen. 
+				// ist kein Maximum gesetzt ,wird als default Wert 3 genommen.
 				if(document.getElementById("max").value == ""){
-					
+
 					var max=calculateMax(dat0);
 				    if(!(parseFloat(max) < 3)){
 				    	max=3;
@@ -199,8 +261,8 @@
 				}else{
 					max= parseFloat(document.getElementById("max").value);
 				}
-				
-			    var step = 510  /(max-min); 
+
+			    var step = 510  /(max-min);
 				ctx.fillStyle = "rgb(255,255,255)";
 				ctx.fillRect(0,0,1400, canvas.height);
 				ctxProfile.fillStyle = "rgb(255,255,255)";
@@ -221,8 +283,8 @@
 			ctxProfile.fillStyle = "rgb(0,0,0)";
 			ctxProfile.fillRect(0,lineDepth-1,canvasProfile.width, 2);
 		}
- 		// Empfaengt den Wert vom Slider und laesst die Oberflaeche neu malen, mit der aktuellen Tiefe. 
- 		function depthChange(value){	
+ 		// Empfaengt den Wert vom Slider und laesst die Oberflaeche neu malen, mit der aktuellen Tiefe.
+ 		function depthChange(value){
 			depth= -value.value;
 			canvasDepth2d.fillStyle = "rgb(255,255,255)";
 			canvasDepth2d.fillRect(0,0,canvasDepth.width, canvasDepth.height);
@@ -230,7 +292,7 @@
 			canvasDepth2d.font="20px Georgia";
 			var tiefe = "0 - 50m";
 			switch(depth){
-				case 1: 
+				case 1:
 					tiefe="0 - 50m"; //50 = 2 px
 					break;
 				case 2:
@@ -277,12 +339,12 @@
 					break;
 				default:
 					break;					// Questschnitttiefe = 212 px
-					
+
 			}
 			canvasDepth2d.fillText(tiefe, 0 , 30);
 		    redraw();
 		  }
- 		
+
  		function latitudeChange(value, onMove){
  			if(dataloaded==1){
  			latitude = value.value;
@@ -297,7 +359,7 @@
  			ctxLatitude.font="20px Georgia";
  			ctxLatitude.fillText("Lat: " +Math.round(latitude*2.8215) +"°", 0 , 30);
  			}
- 		
+
  		}
 	</script>
 </body>
